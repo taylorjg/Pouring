@@ -70,8 +70,8 @@ namespace Pouring1
                         {
                             var previousState = (acc.IsEmpty()) ? _pouring._initialState : acc.First().Item2;
                             var nextState = move.Change(previousState);
-                            var formattedText = string.Format("{0} => {1}", move, nextState);
-                            return new[] {Tuple.Create(move, nextState, formattedText)}.Concat(acc).ToList();
+                            var moveDescription = string.Format("{0} => {1}", move, nextState);
+                            return new[] {Tuple.Create(move, nextState, moveDescription)}.Concat(acc).ToList();
                         });
                 return movesAndStates.Map(x => x.Item3).Reverse().MkString("[", ", ", "]");
             }
@@ -90,12 +90,14 @@ namespace Pouring1
             }
         }
 
+        private static readonly IEqualityComparer<State> Comparer = new StateEqualityComparer();
+
         private Stream<IList<Path>> From(IList<Path> paths, IEnumerable<State> explored)
         {
             if (paths.IsEmpty()) return Stream<IList<Path>>.EmptyStream;
             var morePaths = paths
                 .FlatMap(p => _moves.Map(p.Extend))
-                .Where(y => !System.Linq.Enumerable.Contains(explored, y.EndState, new StateEqualityComparer())).ToList();
+                .Where(p => !System.Linq.Enumerable.Contains(explored, p.EndState, Comparer)).ToList();
             return Stream<IList<Path>>.ConsStream(
                 paths,
                 () => From(
