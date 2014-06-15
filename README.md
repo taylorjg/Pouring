@@ -4,5 +4,5 @@
 
 ## References
 
-* https://class.coursera.org/progfun-004
+* [Functional Programming Principles in Scala](https://class.coursera.org/progfun-004)
 * [Die hard 3 : Jugs Problem](https://www.youtube.com/watch?v=BVtQNK_ZUJg)
