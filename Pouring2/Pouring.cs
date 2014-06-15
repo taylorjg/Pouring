@@ -41,13 +41,18 @@ namespace Pouring2
         public class Path
         {
             private readonly Pouring _pouring;
-            public State EndState { get; private set; }
+            private readonly State _endState;
             private readonly IImmutableList<Move> _history;
+
+            public State EndState
+            {
+                get { return _endState; }
+            }
 
             public Path(Pouring pouring, State endState, IImmutableList<Move> history)
             {
                 _pouring = pouring;
-                EndState = endState;
+                _endState = endState;
                 _history = history;
             }
 
