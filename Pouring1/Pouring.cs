@@ -20,10 +20,14 @@ namespace Pouring1
             _initialState = new State(_capacities.Map(_ => 0));
             _initialPath = new Path(this, _initialState, System.Linq.Enumerable.Empty<Move>());
             _glasses = System.Linq.Enumerable.Range(0, _capacities.Length).ToList();
-            var moves1 = _glasses.Map(g => new Empty(g)) as IEnumerable<Move>;
-            var moves2 = _glasses.Map(g => new Fill(this, g)) as IEnumerable<Move>;
-            var moves3 = _glasses.FlatMap(g1 => _glasses.Map(g2 => (g1 != g2) ? new Pour(this, g1, g2) : null)).Where(x => x != null) as IEnumerable<Move>;
-            _moves = moves1.Concat(moves2).Concat(moves3).ToList();
+            var moves1 = _glasses.Map(g => new Empty(g));
+            var moves2 = _glasses.Map(g => new Fill(this, g));
+            var moves3 = _glasses.FlatMap(g1 => _glasses.Map(g2 => (g1 != g2) ? new Pour(this, g1, g2) : null)).Where(x => x != null);
+            _moves = moves1
+                .Cast<Move>()
+                .Concat(moves2)
+                .Concat(moves3)
+                .ToList();
         }
 
         public class State : List<int>
@@ -70,10 +74,14 @@ namespace Pouring1
                         {
                             var previousState = (acc.IsEmpty()) ? _pouring._initialState : acc.First().Item2;
                             var nextState = move.Change(previousState);
-                            var moveDescription = string.Format("{0} => {1}", move, nextState);
+                            var paddingPrefix = new string(' ', acc.Count);
+                            var moveDescription = string.Format("{0}{1} => {2}", paddingPrefix, move, nextState);
                             return new[] {Tuple.Create(move, nextState, moveDescription)}.Concat(acc).ToList();
                         });
-                return movesAndStates.Map(x => x.Item3).Reverse().MkString("[", ", ", "]");
+                return movesAndStates
+                    .Map(x => x.Item3)
+                    .Reverse()
+                    .MkString(Environment.NewLine);
             }
         }
 
