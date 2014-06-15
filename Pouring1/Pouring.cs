@@ -11,19 +11,20 @@ namespace Pouring1
         private readonly int[] _capacities;
         private readonly State _initialState;
         private readonly Path _initialPath;
-        private readonly IList<int> _glasses;
-        private readonly IList<Move> _moves;
+        private readonly IList<Move> _allPossibleMoves;
 
         public Pouring(params int[] capacities)
         {
             _capacities = capacities;
             _initialState = new State(_capacities.Map(_ => 0));
             _initialPath = new Path(this, _initialState, System.Linq.Enumerable.Empty<Move>());
-            _glasses = System.Linq.Enumerable.Range(0, _capacities.Length).ToList();
-            var moves1 = _glasses.Map(g => new Empty(g));
-            var moves2 = _glasses.Map(g => new Fill(this, g));
-            var moves3 = _glasses.FlatMap(g1 => _glasses.Map(g2 => (g1 != g2) ? new Pour(this, g1, g2) : null)).Where(x => x != null);
-            _moves = moves1
+
+            var glasses = System.Linq.Enumerable.Range(0, _capacities.Length).ToList();
+            var moves1 = glasses.Map(g => new Empty(g));
+            var moves2 = glasses.Map(g => new Fill(this, g));
+            var moves3 = glasses.FlatMap(g1 => glasses.Map(g2 => (g1 != g2) ? new Pour(this, g1, g2) : null)).Where(x => x != null);
+
+            _allPossibleMoves = moves1
                 .Cast<Move>()
                 .Concat(moves2)
                 .Concat(moves3)
@@ -50,14 +51,14 @@ namespace Pouring1
 
         public class Path
         {
-            public State EndState { get; private set; }
             private readonly Pouring _pouring;
+            public State EndState { get; private set; }
             private readonly IEnumerable<Move> _history;
 
             public Path(Pouring pouring, State endState, IEnumerable<Move> history)
             {
-                EndState = endState;
                 _pouring = pouring;
+                EndState = endState;
                 _history = history;
             }
 
@@ -104,7 +105,7 @@ namespace Pouring1
         {
             if (paths.IsEmpty()) return Stream<IList<Path>>.EmptyStream;
             var morePaths = paths
-                .FlatMap(p => _moves.Map(p.Extend))
+                .FlatMap(p => _allPossibleMoves.Map(p.Extend))
                 .Where(p => !System.Linq.Enumerable.Contains(explored, p.EndState, Comparer)).ToList();
             return Stream<IList<Path>>.ConsStream(
                 paths,
