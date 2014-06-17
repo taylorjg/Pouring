@@ -49,6 +49,11 @@ namespace Pouring2
                 get { return _endState; }
             }
 
+            public IImmutableList<Move> History
+            {
+                get { return _history; }
+            }
+
             public Path(Pouring pouring, State endState, IImmutableList<Move> history)
             {
                 _pouring = pouring;
@@ -72,10 +77,11 @@ namespace Pouring2
                             var paddingPrefix = new string(' ', acc.Count);
                             var nextStateDescription = nextState.MkString("(", ",", ")");
                             var stepDescription = string.Format("{0}{1} => {2}", paddingPrefix, move, nextStateDescription);
-                            return acc.Add(Tuple.Create(move, nextState, stepDescription));
+                            return acc.Insert(0, Tuple.Create(move, nextState, stepDescription));
                         });
                 return movesAndStates
                     .Map(x => x.Item3)
+                    .Reverse()
                     .MkString(Environment.NewLine);
             }
         }
@@ -93,25 +99,44 @@ namespace Pouring2
             }
         }
 
-        private static readonly IEqualityComparer<State> EqualityComparer = new StateEqualityComparer();
+        private class PathEqualityComparer : IEqualityComparer<Path>
+        {
+            public bool Equals(Path x, Path y)
+            {
+                return
+                    x.EndState.SequenceEqual(y.EndState) &&
+                    x.History.SequenceEqual(y.History);
+            }
+
+            public int GetHashCode(Path x)
+            {
+                return x.EndState.GetHashCode();
+            }
+        }
+
+        private static readonly IEqualityComparer<State> TheStateEqualityComparer = new StateEqualityComparer();
+        private static readonly IEqualityComparer<Path> ThePathEqualityComparer = new PathEqualityComparer();
 
         private Stream<IImmutableSet<Path>> From(IImmutableSet<Path> paths, IImmutableSet<State> explored)
         {
             if (paths.IsEmpty()) return Stream<IImmutableSet<Path>>.EmptyStream;
             var morePathsEnumerable = paths
                 .FlatMap(p => _allPossibleMoves.Map(p.Extend))
-                .Where(p => !System.Linq.Enumerable.Contains(explored, p.EndState, EqualityComparer));
-            var morePaths = ImmutableHashSet.CreateRange(morePathsEnumerable);
+                .Where(p => !System.Linq.Enumerable.Contains(explored, p.EndState, TheStateEqualityComparer));
+            var morePaths = ImmutableHashSet.CreateRange(ThePathEqualityComparer, morePathsEnumerable);
             return Stream<IImmutableSet<Path>>.ConsStream(
                 paths,
                 () => From(
                     morePaths,
-                    explored.Union(ImmutableHashSet.CreateRange(morePaths.Map(p => p.EndState)))));
+                    explored.Union(ImmutableHashSet.CreateRange(TheStateEqualityComparer, morePaths.Map(p => p.EndState)))));
         }
 
         public IEnumerable<Path> Solutions(int target)
         {
-            var pathSets = From(ImmutableHashSet.Create(_initialPath), ImmutableHashSet.Create(_initialState));
+            var pathSets = From(
+                ImmutableHashSet.Create(ThePathEqualityComparer, _initialPath),
+                ImmutableHashSet.Create(TheStateEqualityComparer, _initialState));
+
             return pathSets
                 .ToEnumerable()
                 .SelectMany(pathSet => pathSet.Where(path => System.Linq.Enumerable.Contains(path.EndState, target)));
