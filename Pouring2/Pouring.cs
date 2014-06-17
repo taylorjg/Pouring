@@ -16,6 +16,11 @@ namespace Pouring2
         private readonly Path _initialPath;
         private readonly IImmutableList<Move> _allPossibleMoves;
 
+        public IImmutableList<int> Capacities
+        {
+            get { return _capacities; }
+        }
+
         public Pouring(IImmutableList<int> capacities)
         {
             _capacities = capacities;
@@ -24,8 +29,8 @@ namespace Pouring2
 
             var glasses = ImmutableList.CreateRange(System.Linq.Enumerable.Range(0, _capacities.Count));
             var moves1 = glasses.Map(g => new Empty(g));
-            var moves2 = glasses.Map(g => new Fill(this, g));
-            var moves3 = glasses.FlatMap(g1 => glasses.Where(g2 => g2 != g1).Map(g2 => new Pour(this, g1, g2)));
+            var moves2 = glasses.Map(g => new Fill(g));
+            var moves3 = glasses.FlatMap(g1 => glasses.Where(g2 => g2 != g1).Map(g2 => new Pour(g1, g2)));
 
             _allPossibleMoves = ImmutableList.CreateRange(moves1
                 .Cast<Move>()
@@ -35,7 +40,7 @@ namespace Pouring2
 
         public abstract class Move
         {
-            public abstract State Change(State state);
+            public abstract State Change(Pouring pouring, State state);
         }
 
         public class Path
@@ -63,7 +68,7 @@ namespace Pouring2
 
             public Path Extend(Move move)
             {
-                return new Path(_pouring, move.Change(EndState), _history.Insert(0, move));
+                return new Path(_pouring, move.Change(_pouring, EndState), _history.Insert(0, move));
             }
 
             public override string ToString()
@@ -73,10 +78,11 @@ namespace Pouring2
                     (move, acc) =>
                         {
                             var previousState = (acc.IsEmpty()) ? _pouring._initialState : acc.First().Item2;
-                            var nextState = move.Change(previousState);
+                            var nextState = move.Change(_pouring, previousState);
                             var paddingPrefix = new string(' ', acc.Count);
+                            var moveDescription = move.ToString();
                             var nextStateDescription = nextState.MkString("(", ",", ")");
-                            var stepDescription = string.Format("{0}{1} => {2}", paddingPrefix, move, nextStateDescription);
+                            var stepDescription = string.Format("{0}{1} => {2}", paddingPrefix, moveDescription, nextStateDescription);
                             return acc.Insert(0, Tuple.Create(move, nextState, stepDescription));
                         });
                 return movesAndStates
@@ -124,23 +130,36 @@ namespace Pouring2
                 .FlatMap(p => _allPossibleMoves.Map(p.Extend))
                 // TODO: fix ReSharper squiggle: "Implicitly captured closure: this"
                 .Where(p => !System.Linq.Enumerable.Contains(explored, p.EndState, TheStateEqualityComparer));
-            var morePaths = ImmutableHashSet.CreateRange(ThePathEqualityComparer, morePathsEnumerable);
+            var morePaths = CreatePathSet(morePathsEnumerable);
             return Stream<IImmutableSet<Path>>.ConsStream(
                 paths,
                 () => From(
                     morePaths,
-                    explored.Union(ImmutableHashSet.CreateRange(TheStateEqualityComparer, morePaths.Map(p => p.EndState)))));
+                    explored.Union(morePaths.Map(p => p.EndState))));
         }
 
         public IEnumerable<Path> Solutions(int target)
         {
-            var pathSets = From(
-                ImmutableHashSet.Create(ThePathEqualityComparer, _initialPath),
-                ImmutableHashSet.Create(TheStateEqualityComparer, _initialState));
+            var pathSets = From(CreatePathSet(_initialPath), CreateStateSet(_initialState));
 
             return pathSets
                 .ToEnumerable()
-                .SelectMany(pathSet => pathSet.Where(path => System.Linq.Enumerable.Contains(path.EndState, target)));
+                .FlatMap(pathSet => pathSet.Where(path => System.Linq.Enumerable.Contains(path.EndState, target)));
+        }
+
+        private static IImmutableSet<Path> CreatePathSet(Path path)
+        {
+            return ImmutableHashSet.Create(ThePathEqualityComparer, path);
+        }
+
+        private static IImmutableSet<Path> CreatePathSet(IEnumerable<Path> paths)
+        {
+            return ImmutableHashSet.CreateRange(ThePathEqualityComparer, paths);
+        }
+
+        private static IImmutableSet<State> CreateStateSet(State state)
+        {
+            return ImmutableHashSet.Create(TheStateEqualityComparer, state);
         }
     }
 }

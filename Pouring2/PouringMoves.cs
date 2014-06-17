@@ -16,7 +16,7 @@ namespace Pouring2
                 _glass = glass;
             }
 
-            public override State Change(State state)
+            public override State Change(Pouring pouring, State state)
             {
                 return state.SetItem(_glass, 0);
             }
@@ -29,18 +29,16 @@ namespace Pouring2
 
         private class Fill : Move
         {
-            private readonly Pouring _pouring;
             private readonly int _glass;
 
-            public Fill(Pouring pouring, int glass)
+            public Fill(int glass)
             {
-                _pouring = pouring;
                 _glass = glass;
             }
 
-            public override State Change(State state)
+            public override State Change(Pouring pouring, State state)
             {
-                return state.SetItem(_glass, _pouring._capacities[_glass]);
+                return state.SetItem(_glass, pouring.Capacities[_glass]);
             }
 
             public override string ToString()
@@ -51,20 +49,18 @@ namespace Pouring2
 
         private class Pour : Move
         {
-            private readonly Pouring _pouring;
             private readonly int _fromGlass;
             private readonly int _toGlass;
 
-            public Pour(Pouring pouring, int fromGlass, int toGlass)
+            public Pour(int fromGlass, int toGlass)
             {
-                _pouring = pouring;
                 _fromGlass = fromGlass;
                 _toGlass = toGlass;
             }
 
-            public override State Change(State state)
+            public override State Change(Pouring pouring, State state)
             {
-                var toCapacity = _pouring._capacities[_toGlass];
+                var toCapacity = pouring.Capacities[_toGlass];
                 var fromState = state[_fromGlass];
                 var toState = state[_toGlass];
                 var amount = Math.Min(fromState, toCapacity - toState);
