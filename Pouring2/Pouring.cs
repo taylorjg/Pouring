@@ -122,6 +122,7 @@ namespace Pouring2
             if (paths.IsEmpty()) return Stream<IImmutableSet<Path>>.EmptyStream;
             var morePathsEnumerable = paths
                 .FlatMap(p => _allPossibleMoves.Map(p.Extend))
+                // TODO: fix ReSharper squiggle: "Implicitly captured closure: this"
                 .Where(p => !System.Linq.Enumerable.Contains(explored, p.EndState, TheStateEqualityComparer));
             var morePaths = ImmutableHashSet.CreateRange(ThePathEqualityComparer, morePathsEnumerable);
             return Stream<IImmutableSet<Path>>.ConsStream(
