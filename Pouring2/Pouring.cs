@@ -25,7 +25,7 @@ namespace Pouring2
             var glasses = ImmutableList.CreateRange(System.Linq.Enumerable.Range(0, _capacities.Count));
             var moves1 = glasses.Map(g => new Empty(g));
             var moves2 = glasses.Map(g => new Fill(this, g));
-            var moves3 = glasses.FlatMap(g1 => glasses.Map(g2 => (g1 != g2) ? new Pour(this, g1, g2) : null)).Where(x => x != null);
+            var moves3 = glasses.FlatMap(g1 => glasses.Where(g2 => g2 != g1).Map(g2 => new Pour(this, g1, g2)));
 
             _allPossibleMoves = ImmutableList.CreateRange(moves1
                 .Cast<Move>()
