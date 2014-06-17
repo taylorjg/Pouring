@@ -2,6 +2,8 @@
 
 This is a very nice Scala solution to the water pouring problem. I like the fact that it is a pure functional solution. I wondered what it would look like in C# so I created this repo. The second version, Pouring2, uses immutable collections to emphasise the immutability of the solution.
 
+The [Scala version of the code](https://github.com/taylorjg/Pouring/blob/master/Pouring.scala) is much shorter than the C# version!
+
 ## Screenshots
 
 ![Screenshot 1](https://raw.githubusercontent.com/taylorjg/Pouring/master/Images/Screenshot1.png "Screenshot 1")
