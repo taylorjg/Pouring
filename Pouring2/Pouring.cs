@@ -126,11 +126,13 @@ namespace Pouring2
         private Stream<IImmutableSet<Path>> From(IImmutableSet<Path> paths, IImmutableSet<State> explored)
         {
             if (paths.IsEmpty()) return Stream<IImmutableSet<Path>>.EmptyStream;
+
+            var exploredInLocalVar = explored;
             var morePathsEnumerable = paths
                 .FlatMap(p => _allPossibleMoves.Map(p.Extend))
-                // TODO: fix ReSharper squiggle: "Implicitly captured closure: this"
-                .Where(p => !System.Linq.Enumerable.Contains(explored, p.EndState, TheStateEqualityComparer));
+                .Where(p => !System.Linq.Enumerable.Contains(exploredInLocalVar, p.EndState, TheStateEqualityComparer));
             var morePaths = CreatePathSet(morePathsEnumerable);
+
             return Stream<IImmutableSet<Path>>.ConsStream(
                 paths,
                 () => From(
