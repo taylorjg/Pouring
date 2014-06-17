@@ -1,3 +1,7 @@
+## Description
+
+This is a very nice Scala solution to the water pouring problem. I like the fact that it is a pure functional solution. I wondered what it would look like in C# so I created this repo. The second version, Pouring2, uses immutable collections to emphasise the immutability of the solution.
+
 ## Screenshots
 
 ![Screenshot 1](https://raw.githubusercontent.com/taylorjg/Pouring/master/Images/Screenshot1.png "Screenshot 1")
@@ -15,3 +19,4 @@
 #### Other Links
 
 * [Die Hard 3 - The 3 & 5 Litre Water Puzzle](https://www.youtube.com/watch?v=BVtQNK_ZUJg)
+* [Microsoft Immutable Collections NuGet Package](http://www.nuget.org/packages/Microsoft.Bcl.Immutable)
